@@ -148,3 +148,6 @@ cython_debug/
 
 # VS Code
 .vscode/
+
+# Whitelist the portable app folder
+!SCREENSHOTAPP_PORTABLE/
