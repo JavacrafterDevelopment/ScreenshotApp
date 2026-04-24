@@ -1,19 +1,29 @@
 import sys
 import os
 import time
+import subprocess
 from datetime import datetime
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, pyqtSlot
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QFileDialog, QGridLayout)
+                             QFileDialog, QGridLayout, QListWidgetItem)
 from PyQt6.QtGui import QIcon
 
 from qfluentwidgets import (FluentWindow, SubtitleLabel, LineEdit, PushButton, 
                             SpinBox, BodyLabel, Theme, setTheme, TitleLabel, 
-                            CardWidget, PrimaryPushButton, ToolButton, InfoBar, InfoBarPosition)
+                            CardWidget, PrimaryPushButton, ToolButton, InfoBar, 
+                            ListWidget, ToggleButton)
 
 import keyboard
 import mss
 from PIL import Image
+
+class HotkeyRecorder(QThread):
+    hotkey_recorded = pyqtSignal(str)
+
+    def run(self):
+        # Blocks until a key combination is pressed
+        hk = keyboard.read_hotkey(suppress=False)
+        self.hotkey_recorded.emit(hk)
 
 class ScreenshotEngine(QThread):
     screenshot_taken = pyqtSignal(str)
@@ -56,7 +66,6 @@ class ScreenshotEngine(QThread):
         if self.is_running:
             self.manual_requested = True
         else:
-            # If auto isn't running, just take one now on the main thread or spin up logic
             self.take_screenshot(manual=True)
 
     def take_screenshot(self, manual=False):
@@ -100,6 +109,7 @@ class ScreenshotInterface(QWidget):
 
         self.hotkey_hook = None
         self.current_hotkey = "f9"
+        self.recorder = None
 
         self.setup_ui()
         self.register_hotkey(self.current_hotkey)
@@ -185,14 +195,11 @@ class ScreenshotInterface(QWidget):
         self.right_layout.addWidget(self.manual_title)
         
         self.hotkey_layout = QHBoxLayout()
-        self.hotkey_label = BodyLabel("Global Hotkey:", self)
-        self.hotkey_input = LineEdit(self)
-        self.hotkey_input.setText(self.current_hotkey)
-        self.hotkey_btn = PushButton("Set Key", self)
-        self.hotkey_btn.clicked.connect(self.set_hotkey)
+        self.hotkey_label = BodyLabel("Global Hotkey: " + self.current_hotkey, self)
+        self.hotkey_btn = ToggleButton("Record New Key", self)
+        self.hotkey_btn.clicked.connect(self.toggle_record_hotkey)
         
         self.hotkey_layout.addWidget(self.hotkey_label)
-        self.hotkey_layout.addWidget(self.hotkey_input)
         self.hotkey_layout.addWidget(self.hotkey_btn)
         self.right_layout.addLayout(self.hotkey_layout)
         
@@ -206,7 +213,20 @@ class ScreenshotInterface(QWidget):
         self.bottom_layout.addWidget(self.right_card)
 
         self.main_layout.addLayout(self.bottom_layout)
-        self.main_layout.addStretch(1)
+        
+        # Console Section
+        self.console_card = CardWidget(self)
+        self.console_layout = QVBoxLayout(self.console_card)
+        self.console_layout.setSpacing(16)
+        
+        self.console_title = SubtitleLabel("Output Console (Double-click to view in explorer)", self)
+        self.console_list = ListWidget(self)
+        self.console_list.itemDoubleClicked.connect(self.open_in_explorer)
+        
+        self.console_layout.addWidget(self.console_title)
+        self.console_layout.addWidget(self.console_list)
+        
+        self.main_layout.addWidget(self.console_card)
 
     def browse_dir(self):
         dir_path = QFileDialog.getExistingDirectory(self, "Select Save Directory", self.dir_input.text())
@@ -236,18 +256,28 @@ class ScreenshotInterface(QWidget):
         self.status_label.setText("Status: Stopped (Counter Reset)")
         InfoBar.error("Stopped", "Auto screenshots stopped and counter reset.", duration=2000, parent=self)
 
-    def set_hotkey(self):
-        new_key = self.hotkey_input.text().strip().lower()
-        if new_key:
-            self.register_hotkey(new_key)
-            
+    def toggle_record_hotkey(self):
+        if self.hotkey_btn.isChecked():
+            self.hotkey_btn.setText("Listening...")
+            self.recorder = HotkeyRecorder()
+            self.recorder.hotkey_recorded.connect(self.on_hotkey_recorded)
+            self.recorder.start()
+        else:
+            self.hotkey_btn.setText("Record New Key")
+
+    @pyqtSlot(str)
+    def on_hotkey_recorded(self, key):
+        self.hotkey_btn.setChecked(False)
+        self.hotkey_btn.setText("Record New Key")
+        self.register_hotkey(key)
+
     def register_hotkey(self, key):
         try:
             if self.hotkey_hook:
                 keyboard.remove_hotkey(self.hotkey_hook)
             self.hotkey_hook = keyboard.add_hotkey(key, self.engine.trigger_manual)
             self.current_hotkey = key
-            self.hotkey_input.setText(key)
+            self.hotkey_label.setText("Global Hotkey: " + key)
             InfoBar.success("Hotkey Set", f"Manual screenshot key set to '{key}'.", duration=2000, parent=self)
         except Exception as e:
             InfoBar.error("Hotkey Error", f"Failed to bind '{key}': {str(e)}", duration=3000, parent=self)
@@ -255,6 +285,19 @@ class ScreenshotInterface(QWidget):
     @pyqtSlot(str)
     def on_screenshot_taken(self, filename):
         self.status_label.setText(f"Saved: {filename}")
+        
+        filepath = os.path.join(self.engine.save_dir, filename)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        
+        item = QListWidgetItem(f"[{timestamp}] {filename}")
+        item.setData(Qt.ItemDataRole.UserRole, filepath)
+        self.console_list.insertItem(0, item)
+
+    def open_in_explorer(self, item):
+        filepath = item.data(Qt.ItemDataRole.UserRole)
+        if filepath and os.path.exists(filepath):
+            filepath = os.path.normpath(filepath)
+            subprocess.Popen(f'explorer /select,"{filepath}"')
 
     @pyqtSlot(str)
     def on_error(self, err):
@@ -271,23 +314,17 @@ class MainWindow(FluentWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Screenshot App")
-        self.resize(800, 600)
+        self.resize(850, 700)
         
-        # Add the main interface
         self.screenshot_interface = ScreenshotInterface(self)
-        # We must add it to the window
-        # The first argument is the widget, second is an icon (can be None or standard), third is the text
         self.addSubInterface(self.screenshot_interface, QIcon(), "Screenshots")
 
 if __name__ == '__main__':
-    # Enable High DPI scaling
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
     
     app = QApplication(sys.argv)
-    
-    # Auto detect dark/light theme
     setTheme(Theme.AUTO)
     
     w = MainWindow()
