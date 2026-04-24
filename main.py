@@ -5,13 +5,13 @@ import subprocess
 from datetime import datetime
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, pyqtSlot
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QFileDialog, QGridLayout, QListWidgetItem)
+                             QFileDialog, QGridLayout, QListWidgetItem, QSystemTrayIcon)
 from PyQt6.QtGui import QIcon
 
 from qfluentwidgets import (FluentWindow, SubtitleLabel, LineEdit, PushButton, 
                             SpinBox, BodyLabel, Theme, setTheme, TitleLabel, 
                             CardWidget, PrimaryPushButton, ToolButton, InfoBar, 
-                            ListWidget, ToggleButton)
+                            ListWidget, ToggleButton, FluentIcon)
 
 import keyboard
 import mss
@@ -110,6 +110,10 @@ class ScreenshotInterface(QWidget):
         self.hotkey_hook = None
         self.current_hotkey = "f9"
         self.recorder = None
+
+        self.tray = QSystemTrayIcon(self)
+        self.tray.setIcon(FluentIcon.CAMERA.icon())
+        self.tray.show()
 
         self.setup_ui()
         self.register_hotkey(self.current_hotkey)
@@ -292,6 +296,9 @@ class ScreenshotInterface(QWidget):
         item = QListWidgetItem(f"[{timestamp}] {filename}")
         item.setData(Qt.ItemDataRole.UserRole, filepath)
         self.console_list.insertItem(0, item)
+        
+        # Show Windows notification
+        self.tray.showMessage("Screenshot Saved", f"{filename} saved successfully.", QSystemTrayIcon.MessageIcon.Information, 2000)
 
     def open_in_explorer(self, item):
         filepath = item.data(Qt.ItemDataRole.UserRole)
