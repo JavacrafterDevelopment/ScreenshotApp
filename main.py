@@ -75,11 +75,19 @@ class ScreenshotEngine(QThread):
 
         # Naming rule
         if manual:
-            filename = f"{self.prefix}_- MANUAL - {self.counter}.png"
+            base_filename = f"{self.prefix}_- MANUAL - {self.counter}"
         else:
-            filename = f"{self.prefix}_{self.counter}.png"
+            base_filename = f"{self.prefix}_{self.counter}"
             
+        filename = f"{base_filename}.png"
         filepath = os.path.join(self.save_dir, filename)
+        
+        # Prevent overwrite by appending SET X
+        set_num = 2
+        while os.path.exists(filepath):
+            filename = f"{base_filename} SET {set_num}.png"
+            filepath = os.path.join(self.save_dir, filename)
+            set_num += 1
         
         try:
             # Capture all monitors
@@ -297,8 +305,9 @@ class ScreenshotInterface(QWidget):
         item.setData(Qt.ItemDataRole.UserRole, filepath)
         self.console_list.insertItem(0, item)
         
-        # Show Windows notification
-        self.tray.showMessage("Screenshot Saved", f"{filename} saved successfully.", QSystemTrayIcon.MessageIcon.Information, 2000)
+        # Show Windows notification only for manual screenshots
+        if "- MANUAL -" in filename:
+            self.tray.showMessage("Screenshot Saved", f"{filename} saved successfully.", QSystemTrayIcon.MessageIcon.Information, 2000)
 
     def open_in_explorer(self, item):
         filepath = item.data(Qt.ItemDataRole.UserRole)
