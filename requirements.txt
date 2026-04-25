@@ -1,5 +1,5 @@
 PyQt6
-PyQt6-FluentWidgets
+PyQt6-Fluent-Widgets
 keyboard
 mss
 Pillow
