@@ -11,7 +11,8 @@ from PyQt6.QtGui import QIcon
 from qfluentwidgets import (FluentWindow, SubtitleLabel, LineEdit, PushButton, 
                             SpinBox, BodyLabel, Theme, setTheme, TitleLabel, 
                             CardWidget, PrimaryPushButton, ToolButton, InfoBar, 
-                            ListWidget, ToggleButton, FluentIcon)
+                            ListWidget, ToggleButton, FluentIcon, ComboBox, SettingCardGroup,
+                            OptionsSettingCard, ExpandLayout)
 
 import keyboard
 import mss
@@ -42,6 +43,12 @@ class ScreenshotEngine(QThread):
         self.manual_requested = False
         
         self.sct = mss.mss()
+        self.format = "PNG"
+        self.resolution = self.get_resolution()
+
+    def get_resolution(self):
+        monitor = self.sct.monitors[0]
+        return f"{monitor['width']}x{monitor['height']}"
 
     def run(self):
         self.is_running = True
@@ -79,13 +86,14 @@ class ScreenshotEngine(QThread):
         else:
             base_filename = f"{self.prefix}_{self.counter}"
             
-        filename = f"{base_filename}.png"
+        ext = self.format.lower()
+        filename = f"{base_filename}.{ext}"
         filepath = os.path.join(self.save_dir, filename)
         
         # Prevent overwrite by appending SET X
         set_num = 2
         while os.path.exists(filepath):
-            filename = f"{base_filename} SET {set_num}.png"
+            filename = f"{base_filename} SET {set_num}.{ext}"
             filepath = os.path.join(self.save_dir, filename)
             set_num += 1
         
@@ -96,7 +104,7 @@ class ScreenshotEngine(QThread):
             
             # Save using PIL
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
-            img.save(filepath, "PNG")
+            img.save(filepath, self.format)
             
             self.counter += 1
             self.screenshot_taken.emit(filename)
@@ -131,9 +139,17 @@ class ScreenshotInterface(QWidget):
         self.main_layout.setContentsMargins(32, 32, 32, 32)
         self.main_layout.setSpacing(24)
 
-        # Title
+        # Title and Resolution
+        self.header_layout = QHBoxLayout()
         self.title_label = TitleLabel("Screenshot Configuration", self)
-        self.main_layout.addWidget(self.title_label)
+        self.res_label = SubtitleLabel(f"Detected Resolution: {self.engine.resolution}", self)
+        self.res_label.setStyleSheet("color: rgba(0, 0, 0, 0.6);") # Subtle grey
+        
+        self.header_layout.addWidget(self.title_label)
+        self.header_layout.addStretch(1)
+        self.header_layout.addWidget(self.res_label)
+        
+        self.main_layout.addLayout(self.header_layout)
 
         # Top Section: Directory and Prefix
         self.top_card = CardWidget(self)
@@ -326,14 +342,72 @@ class ScreenshotInterface(QWidget):
         super().closeEvent(event)
 
 
+class SettingsInterface(QWidget):
+    def __init__(self, engine, parent=None):
+        super().__init__(parent=parent)
+        self.setObjectName("SettingsInterface")
+        self.engine = engine
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(32, 32, 32, 32)
+        self.main_layout.setSpacing(24)
+
+        self.title_label = TitleLabel("Application Settings", self)
+        self.main_layout.addWidget(self.title_label)
+
+        # File Format Selection
+        self.format_group = CardWidget(self)
+        self.format_layout = QHBoxLayout(self.format_group)
+        
+        self.format_icon = ToolButton(FluentIcon.PHOTO, self.format_group)
+        self.format_text_layout = QVBoxLayout()
+        self.format_title = BodyLabel("Image Format", self.format_group)
+        self.format_desc = BodyLabel("Select the file format for your screenshots", self.format_group)
+        self.format_desc.setStyleSheet("color: rgba(0, 0, 0, 0.6); font-size: 12px;")
+        self.format_text_layout.addWidget(self.format_title)
+        self.format_text_layout.addWidget(self.format_desc)
+        
+        self.format_combo = ComboBox(self.format_group)
+        self.format_combo.addItems(["PNG", "JPEG"])
+        self.format_combo.setCurrentText(self.engine.format if self.engine.format == "PNG" else "JPEG")
+        self.format_combo.currentTextChanged.connect(self.on_format_changed)
+        
+        self.format_layout.addWidget(self.format_icon)
+        self.format_layout.addLayout(self.format_text_layout)
+        self.format_layout.addStretch(1)
+        self.format_layout.addWidget(self.format_combo)
+        
+        self.main_layout.addWidget(self.format_group)
+
+        # Resolution Info
+        self.info_card = CardWidget(self)
+        self.info_layout = QVBoxLayout(self.info_card)
+        self.res_info_title = SubtitleLabel("System Information", self.info_card)
+        self.res_info_card = BodyLabel(f"Current Screen Resolution: {self.engine.resolution}", self.info_card)
+        self.info_layout.addWidget(self.res_info_title)
+        self.info_layout.addWidget(self.res_info_card)
+        
+        self.main_layout.addWidget(self.info_card)
+        self.main_layout.addStretch(1)
+
+    def on_format_changed(self, text):
+        self.engine.format = text
+        InfoBar.success("Settings Saved", f"Screenshot format changed to {self.engine.format}", duration=2000, parent=self)
+
+
 class MainWindow(FluentWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Screenshot App")
-        self.resize(850, 700)
+        self.resize(950, 750)
         
         self.screenshot_interface = ScreenshotInterface(self)
-        self.addSubInterface(self.screenshot_interface, QIcon(), "Screenshots")
+        self.settings_interface = SettingsInterface(self.screenshot_interface.engine, self)
+        
+        self.addSubInterface(self.screenshot_interface, FluentIcon.CAMERA, "Screenshots")
+        self.addSubInterface(self.settings_interface, FluentIcon.SETTING, "Settings")
 
 if __name__ == '__main__':
     QApplication.setHighDpiScaleFactorRoundingPolicy(
