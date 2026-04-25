@@ -2,8 +2,8 @@ name: Build & Release ScreenshotApp
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -44,8 +44,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: latest
-          name: ScreenshotApp Latest
+          # Note: Since this triggers on tags, we can use the tag name for the release
+          # If triggered manually, it will still use 'latest' or a provided ref
+          tag_name: ${{ github.ref_name }}
+          name: ScreenshotApp ${{ github.ref_name }}
           files: SCREENSHOTAPP_PORTABLE.zip
           prerelease: true
           make_latest: true
