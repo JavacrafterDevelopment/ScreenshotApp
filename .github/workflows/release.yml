@@ -33,21 +33,14 @@ jobs:
       - name: Zip portable folder
         run: Compress-Archive -Path "SCREENSHOTAPP_PORTABLE\*" -DestinationPath "SCREENSHOTAPP_PORTABLE.zip"
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: SCREENSHOTAPP_PORTABLE
-          path: SCREENSHOTAPP_PORTABLE.zip
-          retention-days: 1
-          overwrite: true
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # Note: Since this triggers on tags, we can use the tag name for the release
-          # If triggered manually, it will still use 'latest' or a provided ref
           tag_name: ${{ github.ref_name }}
           name: ScreenshotApp ${{ github.ref_name }}
           files: SCREENSHOTAPP_PORTABLE.zip
-          prerelease: true
+          # Turning off prerelease so it shows up prominently on the sidebar
+          prerelease: false
           make_latest: true
+          # Explicitly providing the token to ensure it has permission
+          token: ${{ secrets.GITHUB_TOKEN }}
