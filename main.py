@@ -44,6 +44,7 @@ class ScreenshotEngine(QThread):
         
         self.sct = mss.mss()
         self.format = "PNG"
+        self.resolution_override = "Current Resolution"
         self.resolution = self.get_resolution()
 
     def get_resolution(self):
@@ -104,6 +105,18 @@ class ScreenshotEngine(QThread):
             
             # Save using PIL
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
+            
+            # Apply resolution override if needed
+            res_map = {
+                "1080p": (1920, 1080),
+                "1440p": (2560, 1440),
+                "4k": (3840, 2160),
+                "5k": (5120, 2880)
+            }
+            if self.resolution_override in res_map:
+                target_size = res_map[self.resolution_override]
+                img = img.resize(target_size, Image.Resampling.LANCZOS)
+            
             img.save(filepath, self.format)
             
             self.counter += 1
@@ -139,17 +152,9 @@ class ScreenshotInterface(QWidget):
         self.main_layout.setContentsMargins(32, 32, 32, 32)
         self.main_layout.setSpacing(24)
 
-        # Title and Resolution
-        self.header_layout = QHBoxLayout()
+        # Title
         self.title_label = TitleLabel("Screenshot Configuration", self)
-        self.res_label = SubtitleLabel(f"Detected Resolution: {self.engine.resolution}", self)
-        self.res_label.setStyleSheet("color: rgba(0, 0, 0, 0.6);") # Subtle grey
-        
-        self.header_layout.addWidget(self.title_label)
-        self.header_layout.addStretch(1)
-        self.header_layout.addWidget(self.res_label)
-        
-        self.main_layout.addLayout(self.header_layout)
+        self.main_layout.addWidget(self.title_label)
 
         # Top Section: Directory and Prefix
         self.top_card = CardWidget(self)
@@ -381,11 +386,35 @@ class SettingsInterface(QWidget):
         
         self.main_layout.addWidget(self.format_group)
 
-        # Resolution Info
+        # Resolution Selection
+        self.res_group = CardWidget(self)
+        self.res_layout = QHBoxLayout(self.res_group)
+        
+        self.res_icon = ToolButton(FluentIcon.TILES, self.res_group)
+        self.res_text_layout = QVBoxLayout()
+        self.res_title = BodyLabel("Capture Resolution", self.res_group)
+        self.res_desc = BodyLabel("Choose output resolution (resizes if different from screen)", self.res_group)
+        self.res_desc.setStyleSheet("color: rgba(0, 0, 0, 0.6); font-size: 12px;")
+        self.res_text_layout.addWidget(self.res_title)
+        self.res_text_layout.addWidget(self.res_desc)
+        
+        self.res_combo = ComboBox(self.res_group)
+        self.res_combo.addItems(["Current Resolution", "1080p", "1440p", "4k", "5k"])
+        self.res_combo.setCurrentText(self.engine.resolution_override)
+        self.res_combo.currentTextChanged.connect(self.on_resolution_changed)
+        
+        self.res_layout.addWidget(self.res_icon)
+        self.res_layout.addLayout(self.res_text_layout)
+        self.res_layout.addStretch(1)
+        self.res_layout.addWidget(self.res_combo)
+        
+        self.main_layout.addWidget(self.res_group)
+
+        # System Info
         self.info_card = CardWidget(self)
         self.info_layout = QVBoxLayout(self.info_card)
         self.res_info_title = SubtitleLabel("System Information", self.info_card)
-        self.res_info_card = BodyLabel(f"Current Screen Resolution: {self.engine.resolution}", self.info_card)
+        self.res_info_card = BodyLabel(f"Detected Desktop Resolution: {self.engine.resolution}", self.info_card)
         self.info_layout.addWidget(self.res_info_title)
         self.info_layout.addWidget(self.res_info_card)
         
@@ -395,6 +424,10 @@ class SettingsInterface(QWidget):
     def on_format_changed(self, text):
         self.engine.format = text
         InfoBar.success("Settings Saved", f"Screenshot format changed to {self.engine.format}", duration=2000, parent=self)
+
+    def on_resolution_changed(self, text):
+        self.engine.resolution_override = text
+        InfoBar.success("Settings Saved", f"Capture resolution set to {text}", duration=2000, parent=self)
 
 
 class MainWindow(FluentWindow):
