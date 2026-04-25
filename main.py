@@ -42,14 +42,14 @@ class ScreenshotEngine(QThread):
         
         self.manual_requested = False
         
-        self.sct = mss.mss()
         self.format = "PNG"
-        self.resolution_override = "Current Resolution"
+        self.resolution_override = "Detected Resolution"
         self.resolution = self.get_resolution()
 
     def get_resolution(self):
-        monitor = self.sct.monitors[0]
-        return f"{monitor['width']}x{monitor['height']}"
+        with mss.mss() as sct:
+            monitor = sct.monitors[0]
+            return f"{monitor['width']}x{monitor['height']}"
 
     def run(self):
         self.is_running = True
@@ -100,8 +100,30 @@ class ScreenshotEngine(QThread):
         
         try:
             # Capture all monitors
-            monitor = self.sct.monitors[0]
-            sct_img = self.sct.grab(monitor)
+            # Map display name to extension and Pillow format
+            format_map = {
+                "PNG": ("png", "PNG"),
+                "JPEG": ("jpg", "JPEG"),
+                "WebP": ("webp", "WEBP"),
+                "AVIF": ("avif", "AVIF"),
+                "BMP (NOT RECOMMENDED)": ("bmp", "BMP")
+            }
+            ext, pil_format = format_map.get(self.format, ("png", "PNG"))
+            
+            filename = f"{base_filename}.{ext}"
+            filepath = os.path.join(self.save_dir, filename)
+            
+            # Prevent overwrite by appending SET X
+            set_num = 2
+            while os.path.exists(filepath):
+                filename = f"{base_filename} SET {set_num}.{ext}"
+                filepath = os.path.join(self.save_dir, filename)
+                set_num += 1
+            
+            # Capture all monitors
+            with mss.mss() as sct:
+                monitor = sct.monitors[0]
+                sct_img = sct.grab(monitor)
             
             # Save using PIL
             img = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
@@ -113,11 +135,13 @@ class ScreenshotEngine(QThread):
                 "4k": (3840, 2160),
                 "5k": (5120, 2880)
             }
-            if self.resolution_override in res_map:
+            if self.resolution_override.startswith("Detected Resolution") or self.resolution_override == "Current Resolution":
+                pass # No resize needed
+            elif self.resolution_override in res_map:
                 target_size = res_map[self.resolution_override]
                 img = img.resize(target_size, Image.Resampling.LANCZOS)
             
-            img.save(filepath, self.format)
+            img.save(filepath, pil_format)
             
             self.counter += 1
             self.screenshot_taken.emit(filename)
@@ -353,6 +377,25 @@ class SettingsInterface(QWidget):
         self.setObjectName("SettingsInterface")
         self.engine = engine
         self.setup_ui()
+        
+        # Dynamic Resolution Monitoring
+        self.res_timer = QTimer(self)
+        self.res_timer.timeout.connect(self.check_resolution)
+        self.res_timer.start(2000) # Every 2 seconds
+
+    def check_resolution(self):
+        new_res = self.engine.get_resolution()
+        if new_res != self.engine.resolution:
+            self.engine.resolution = new_res
+            self.res_info_card.setText(f"Detected Desktop Resolution: {new_res}")
+            
+            # Update ComboBox text for the first item
+            current_text = self.res_combo.itemText(0)
+            new_text = f"Detected Resolution ({new_res})"
+            if current_text != new_text:
+                self.res_combo.setItemText(0, new_text)
+                if self.engine.resolution_override.startswith("Detected Resolution"):
+                    self.engine.resolution_override = new_text
 
     def setup_ui(self):
         self.main_layout = QVBoxLayout(self)
@@ -375,8 +418,8 @@ class SettingsInterface(QWidget):
         self.format_text_layout.addWidget(self.format_desc)
         
         self.format_combo = ComboBox(self.format_group)
-        self.format_combo.addItems(["PNG", "JPEG"])
-        self.format_combo.setCurrentText(self.engine.format if self.engine.format == "PNG" else "JPEG")
+        self.format_combo.addItems(["PNG", "JPEG", "WebP", "AVIF", "BMP (NOT RECOMMENDED)"])
+        self.format_combo.setCurrentText(self.engine.format)
         self.format_combo.currentTextChanged.connect(self.on_format_changed)
         
         self.format_layout.addWidget(self.format_icon)
@@ -399,7 +442,14 @@ class SettingsInterface(QWidget):
         self.res_text_layout.addWidget(self.res_desc)
         
         self.res_combo = ComboBox(self.res_group)
-        self.res_combo.addItems(["Current Resolution", "1080p", "1440p", "4k", "5k"])
+        # Initial labels
+        detected_label = f"Detected Resolution ({self.engine.resolution})"
+        self.res_combo.addItems([detected_label, "1080p", "1440p", "4k", "5k"])
+        
+        # Handle initial state
+        if self.engine.resolution_override == "Detected Resolution":
+             self.engine.resolution_override = detected_label
+             
         self.res_combo.setCurrentText(self.engine.resolution_override)
         self.res_combo.currentTextChanged.connect(self.on_resolution_changed)
         
