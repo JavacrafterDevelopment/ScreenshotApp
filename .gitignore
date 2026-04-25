@@ -149,5 +149,7 @@ cython_debug/
 # VS Code
 .vscode/
 
-# Whitelist the portable app folder
-!SCREENSHOTAPP_PORTABLE/
+# PyInstaller build output (releases are handled by GitHub Actions now)
+SCREENSHOTAPP_PORTABLE/
+dist/
+*.spec

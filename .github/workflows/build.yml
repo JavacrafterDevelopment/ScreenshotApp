@@ -1,0 +1,58 @@
+name: Build & Release ScreenshotApp
+
+on:
+  # Auto-build when you push a version tag like v1.0.0, v2.1, etc.
+  push:
+    tags:
+      - 'v*'
+  # Manual trigger from GitHub Actions tab (click "Run workflow" button)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: python build.py
+
+      - name: Zip portable folder
+        run: Compress-Archive -Path "SCREENSHOTAPP_PORTABLE\*" -DestinationPath "ScreenshotApp-Portable.zip"
+
+      - name: Upload build artifact (always available)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenshotApp-Portable
+          path: SCREENSHOTAPP_PORTABLE/
+
+      # Create a GitHub Release only when triggered by a version tag
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ScreenshotApp-Portable.zip
+          generate_release_notes: true
+          name: ScreenshotApp ${{ github.ref_name }}
+          body: |
+            ## ScreenshotApp ${{ github.ref_name }}
+            
+            ### How to use
+            1. Download `ScreenshotApp-Portable.zip` below
+            2. Extract the zip anywhere on your computer
+            3. Run `ScreenshotApp.exe` — no Python installation needed!

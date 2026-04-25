@@ -1,0 +1,6 @@
+PyQt6
+PyQt6-FluentWidgets
+keyboard
+mss
+Pillow
+PyInstaller
