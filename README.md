@@ -29,3 +29,34 @@ It builds the portable folder with `build.py`, packs it as
 the `updates` branch (`tools/publish-update.ps1`). The
 [Javacrafter Launcher](https://github.com/JavacrafterDevelopment/Launcher) reads
 that file to offer the update and checks every file against it before installing.
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or https://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or https://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
+### Third-party components
+
+Release builds are made with PyInstaller and bundle Python plus these packages,
+which keep their own licenses:
+
+| Package | License |
+|---|---|
+| PyQt6 | GPL-3.0 |
+| PyQt6-Fluent-Widgets | GPL-3.0 |
+| keyboard, mss, pillow-avif-plugin | MIT |
+| Pillow | MIT-CMU |
+
+Because PyQt6 and PyQt6-Fluent-Widgets are GPL-3.0, the built app as distributed
+is covered by GPL-3.0. This repository's own source stays MIT OR Apache-2.0, both
+of which are compatible with GPL-3.0.
