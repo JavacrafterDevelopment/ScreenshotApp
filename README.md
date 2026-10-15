@@ -60,3 +60,7 @@ which keep their own licenses:
 Because PyQt6 and PyQt6-Fluent-Widgets are GPL-3.0, the built app as distributed
 is covered by GPL-3.0. This repository's own source stays MIT OR Apache-2.0, both
 of which are compatible with GPL-3.0.
+
+Every release carries the texts in a `licenses` folder beside `ScreenshotApp.exe`:
+the MIT, Apache-2.0 and GPL-3.0 licenses, Python's license, and the license of
+every bundled package (`THIRD-PARTY-LICENSES.txt`, collected at build time).

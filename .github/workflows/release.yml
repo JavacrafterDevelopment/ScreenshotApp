@@ -48,6 +48,25 @@ jobs:
       - name: Build with PyInstaller
         run: python build.py
 
+      # The built app bundles Python and other people's packages (PyQt6 and
+      # PyQt6-Fluent-Widgets are GPL-3.0), whose licenses have to travel with it.
+      # pip-licenses collects each installed package's own license text.
+      - name: Add license texts
+        shell: pwsh
+        run: |
+          pip install pip-licenses
+          $dir = 'SCREENSHOTAPP_PORTABLE/licenses'
+          New-Item -ItemType Directory -Force $dir | Out-Null
+          Copy-Item LICENSE-MIT, LICENSE-APACHE, licenses/* $dir
+          $python = python -c "import sys; print(sys.base_prefix)"
+          $pyLicense = Join-Path $python 'LICENSE.txt'
+          if (Test-Path $pyLicense) { Copy-Item $pyLicense (Join-Path $dir 'Python-LICENSE.txt') }
+          else { throw "Python's LICENSE.txt wasn't found under $python" }
+          pip-licenses --from=mixed --with-urls --with-license-file --no-license-path --format=plain-vertical `
+            --ignore-packages pip-licenses prettytable wcwidth |
+            Out-File -Encoding utf8 (Join-Path $dir 'THIRD-PARTY-LICENSES.txt')
+          Get-ChildItem $dir | Format-Table Name, Length
+
       - name: Package
         shell: pwsh
         run: ./tools/release-package.ps1 -Folder SCREENSHOTAPP_PORTABLE -Name ScreenshotApp -Exe ScreenshotApp.exe -Version ${{ steps.version.outputs.version }} -Out release
