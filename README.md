@@ -8,6 +8,9 @@ will eventually add ability to remove the MANUAL from the name of the files wher
 Will also add a native MACOS app too based on the Swift Coding language.
 
 
+Only one ScreenshotApp runs per folder: starting it again brings the open window
+forward instead of a second copy fighting over the hotkey.
+
 ## Releases
 
 Push a version tag and [the Release workflow](.github/workflows/release.yml) does

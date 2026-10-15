@@ -492,7 +492,40 @@ class MainWindow(FluentWindow):
         self.addSubInterface(self.screenshot_interface, FluentIcon.CAMERA, "Screenshots")
         self.addSubInterface(self.settings_interface, FluentIcon.SETTING, "Settings")
 
+def claim_single_instance():
+    """One ScreenshotApp per folder: two copies would fight over the hotkey and the
+    screenshot numbering. A second launch brings the first window forward and exits.
+
+    Returns the mutex handle, which must stay open for as long as the app runs.
+    """
+    import ctypes
+    import hashlib
+
+    if os.name != 'nt':
+        return None
+    folder = os.path.dirname(os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else __file__))
+    key = hashlib.sha256(folder.lower().encode('utf-8')).hexdigest()[:16]
+
+    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel32.CreateMutexW.restype = ctypes.c_void_p
+    handle = kernel32.CreateMutexW(None, False, f"Local\\ScreenshotApp-{key}")
+    ERROR_ALREADY_EXISTS = 183
+    if handle and ctypes.get_last_error() == ERROR_ALREADY_EXISTS:
+        user32 = ctypes.WinDLL('user32')
+        user32.FindWindowW.restype = ctypes.c_void_p
+        hwnd = user32.FindWindowW(None, "Screenshot App")
+        if hwnd:
+            SW_RESTORE = 9
+            if user32.IsIconic(ctypes.c_void_p(hwnd)):
+                user32.ShowWindow(ctypes.c_void_p(hwnd), SW_RESTORE)
+            user32.SetForegroundWindow(ctypes.c_void_p(hwnd))
+        sys.exit(0)
+    return handle
+
+
 if __name__ == '__main__':
+    _instance = claim_single_instance()
+
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
