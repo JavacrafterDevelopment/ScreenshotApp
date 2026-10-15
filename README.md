@@ -6,3 +6,23 @@ will eventually add ability to remove the MANUAL from the name of the files wher
 
 
 Will also add a native MACOS app too based on the Swift Coding language.
+
+
+## Releases
+
+Push a version tag and [the Release workflow](.github/workflows/release.yml) does
+the rest:
+
+```bash
+# set version.txt, e.g. to 0.0.2, then:
+git commit -am "Release 0.0.2"
+git tag v0.0.2
+git push origin main v0.0.2
+```
+
+It builds the portable folder with `build.py`, packs it as
+`ScreenshotApp-windows-x64.zip` with a manifest of every file's SHA-256
+(`tools/release-package.ps1`), publishes the release, and writes `update.json` to
+the `updates` branch (`tools/publish-update.ps1`). The
+[Javacrafter Launcher](https://github.com/JavacrafterDevelopment/Launcher) reads
+that file to offer the update and checks every file against it before installing.
