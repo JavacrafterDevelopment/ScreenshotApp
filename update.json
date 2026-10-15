@@ -2,14 +2,14 @@
   "schema": 1,
   "channels": {
     "beta": {
-      "version": "0.0.2",
-      "published": "2026-10-15T02:22:36Z",
-      "notes": "**Full Changelog**: https://github.com/JavacrafterDevelopment/ScreenshotApp/compare/v0.0.1...v0.0.2",
-      "page": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/tag/v0.0.2",
+      "version": "0.0.3",
+      "published": "2026-10-15T02:48:49Z",
+      "notes": "**Full Changelog**: https://github.com/JavacrafterDevelopment/ScreenshotApp/compare/v0.0.2...v0.0.3",
+      "page": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/tag/v0.0.3",
       "package": {
-        "url": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/download/v0.0.2/ScreenshotApp-windows-x64.zip",
-        "size": 51338245,
-        "sha256": "08fbab9d5356b37b5feddc0e7ac76411cee1338edf8d343c0b4e45fe1bff4522"
+        "url": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/download/v0.0.3/ScreenshotApp-windows-x64.zip",
+        "size": 51456599,
+        "sha256": "0c0d521883b4fe51acad716de9d810457d5c970882e1ac9cead47c9ce198e796"
       },
       "exe": "ScreenshotApp.exe",
       "files": [
@@ -286,7 +286,7 @@
         {
           "path": "_internal/base_library.zip",
           "size": 1333717,
-          "sha256": "e5327916e2b3eb2c5dd7d4c9af98cbb36e86073b2c589df47fe189a81b0c0412"
+          "sha256": "234be81656ec618a13e2567b65fdf5d1f5151a8eb9da13a7dcc8d3d1e50bab4c"
         },
         {
           "path": "_internal/libcrypto-3.dll",
@@ -1079,21 +1079,51 @@
           "sha256": "3dd640518a4fb1084cfc38a0e312b87ff1b0b0a74535e320bb9936441b9ed8ca"
         },
         {
+          "path": "licenses/GPL-3.0.txt",
+          "size": 35823,
+          "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+        },
+        {
+          "path": "licenses/LICENSE-APACHE",
+          "size": 11560,
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "path": "licenses/LICENSE-MIT",
+          "size": 1100,
+          "sha256": "fed465d19758687fabfc1b1d6cdcb36b08c795aaf87bcb2185f2cd4ca2f282f3"
+        },
+        {
+          "path": "licenses/Python-LICENSE.txt",
+          "size": 36874,
+          "sha256": "e502c6b880ff58d614901495a9009c136539cd0b1e2a2abb8fc00b934c203419"
+        },
+        {
+          "path": "licenses/README.txt",
+          "size": 650,
+          "sha256": "04f224c03cd5f21ad1dda272d58d4cc2723e4c39e8f99600f474b914493bf341"
+        },
+        {
+          "path": "licenses/THIRD-PARTY-LICENSES.txt",
+          "size": 332698,
+          "sha256": "c65785356dea095400e9792f300e36497e37c3ee3fc58c5af885cfaf9bca5625"
+        },
+        {
           "path": "ScreenshotApp.exe",
           "size": 4758669,
-          "sha256": "4444e4360c48cf9571a9070751d4078806751a664ef023a4406990aa23bcb1fe"
+          "sha256": "7bfa801e6cd11e78d5a629f78d39098f565ee1e4519fc685186a1abaa20c2be8"
         }
       ]
     },
     "stable": {
-      "version": "0.0.2",
-      "published": "2026-10-15T02:22:36Z",
-      "notes": "**Full Changelog**: https://github.com/JavacrafterDevelopment/ScreenshotApp/compare/v0.0.1...v0.0.2",
-      "page": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/tag/v0.0.2",
+      "version": "0.0.3",
+      "published": "2026-10-15T02:48:49Z",
+      "notes": "**Full Changelog**: https://github.com/JavacrafterDevelopment/ScreenshotApp/compare/v0.0.2...v0.0.3",
+      "page": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/tag/v0.0.3",
       "package": {
-        "url": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/download/v0.0.2/ScreenshotApp-windows-x64.zip",
-        "size": 51338245,
-        "sha256": "08fbab9d5356b37b5feddc0e7ac76411cee1338edf8d343c0b4e45fe1bff4522"
+        "url": "https://github.com/JavacrafterDevelopment/ScreenshotApp/releases/download/v0.0.3/ScreenshotApp-windows-x64.zip",
+        "size": 51456599,
+        "sha256": "0c0d521883b4fe51acad716de9d810457d5c970882e1ac9cead47c9ce198e796"
       },
       "exe": "ScreenshotApp.exe",
       "files": [
@@ -1370,7 +1400,7 @@
         {
           "path": "_internal/base_library.zip",
           "size": 1333717,
-          "sha256": "e5327916e2b3eb2c5dd7d4c9af98cbb36e86073b2c589df47fe189a81b0c0412"
+          "sha256": "234be81656ec618a13e2567b65fdf5d1f5151a8eb9da13a7dcc8d3d1e50bab4c"
         },
         {
           "path": "_internal/libcrypto-3.dll",
@@ -2163,9 +2193,39 @@
           "sha256": "3dd640518a4fb1084cfc38a0e312b87ff1b0b0a74535e320bb9936441b9ed8ca"
         },
         {
+          "path": "licenses/GPL-3.0.txt",
+          "size": 35823,
+          "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+        },
+        {
+          "path": "licenses/LICENSE-APACHE",
+          "size": 11560,
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "path": "licenses/LICENSE-MIT",
+          "size": 1100,
+          "sha256": "fed465d19758687fabfc1b1d6cdcb36b08c795aaf87bcb2185f2cd4ca2f282f3"
+        },
+        {
+          "path": "licenses/Python-LICENSE.txt",
+          "size": 36874,
+          "sha256": "e502c6b880ff58d614901495a9009c136539cd0b1e2a2abb8fc00b934c203419"
+        },
+        {
+          "path": "licenses/README.txt",
+          "size": 650,
+          "sha256": "04f224c03cd5f21ad1dda272d58d4cc2723e4c39e8f99600f474b914493bf341"
+        },
+        {
+          "path": "licenses/THIRD-PARTY-LICENSES.txt",
+          "size": 332698,
+          "sha256": "c65785356dea095400e9792f300e36497e37c3ee3fc58c5af885cfaf9bca5625"
+        },
+        {
           "path": "ScreenshotApp.exe",
           "size": 4758669,
-          "sha256": "4444e4360c48cf9571a9070751d4078806751a664ef023a4406990aa23bcb1fe"
+          "sha256": "7bfa801e6cd11e78d5a629f78d39098f565ee1e4519fc685186a1abaa20c2be8"
         }
       ]
     }
